@@ -1,13 +1,14 @@
 module RackCAS
   class Configuration
     SETTINGS = [:fake, :server_url, :session_store, :exclude_path, :exclude_paths, :extra_attributes_filter,
-                :verify_ssl_cert, :renew, :use_saml_validation, :ignore_intercept_validator, :exclude_request_validator]
+                :verify_ssl_cert, :renew, :use_saml_validation, :pgt_callback_url, :ignore_intercept_validator, 
+                :exclude_request_validator]
 
     SETTINGS.each do |setting|
       attr_accessor setting
 
       define_method "#{setting}?" do
-        !(send(setting).nil? || send(setting) == [])
+        !(send(setting).nil? || send(setting) == [] || send(setting) == false)
       end
     end
 
