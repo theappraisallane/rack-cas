@@ -69,6 +69,46 @@ Edit your `config/initializers/session_store.rb` file with the following:
 require 'rack-cas/session_store/rails/mongoid'
 YourApp::Application.config.session_store ActionDispatch::Session::RackCasMongoidStore
 ```
+
+### Proxy Support ###
+
+#### Setup ####
+
+To set up proxy support, generate and run the migration:
+```ruby
+rails generate proxy_granting_ticket_ious_migration
+rake db:migrate
+```
+Next, set up your callback. Assuming your callback URL is `https://myapp.dev/pgtCallback`, you
+would add the following line to your `config/application.rb` or `config/environment/*.rb` file:
+```ruby
+config.rack_cas.pgt_callback_url = 'https://app.dev/pgtCallback'
+```
+then add to your `config/routes.rb` file:
+```ruby
+get '/pgtCallback', to: Rails.application.config.rack_cas
+```
+*NOTE:* You may define your own callback path instead of `/pgtCallback`. However, the path
+used in both the configuration file and routes file must be the same.
+
+#### Use ####
+
+If everything is set up correctly, your session should have the Proxy Granting Ticket when you are logged in:
+```ruby
+session['cas']['pgt']       #=> "PGT-1234567890"
+```
+To generate a proxy ticket for your other app (`https://my-other-app.dev/`):
+```ruby
+require 'rack-cas/proxy_ticket_generator'
+
+pgt = session['cas']['pgt']                                                        #=> "PGT-1234567890"
+my_other_service_url = 'https://my-other-app.dev/'
+proxy_ticket = RackCAS::ProxyTicketGenerator.generate(my_other_service_url, pgt)   #=> "PT-12121212"
+
+# This is the URL you will use to access your other service:
+my_other_service_url += "?ticket=#{proxy_ticket}"                                  #=> "https://my-other-app.dev/?ticket=PT-12121212"
+```
+
 Sinatra and Other Rack-Compatible Frameworks
 --------------------------------------------
 
