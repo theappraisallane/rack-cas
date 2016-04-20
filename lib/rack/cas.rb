@@ -55,10 +55,15 @@ class Rack::CAS
 
     response = @app.call(env)
 
-    if response[0] == 401 && !ignore_intercept?(request) # access denied
-      log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
-
-      redirect_to server.login_url(request.url).to_s
+    if response[0] == 401
+      unless !ignore_intercept?(request) # access denied
+        log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
+        redirect_to server.login_url(request.url).to_s
+      else
+        # set location to cas_server_url/login?service=http_referer
+        response[1]['location'] = server.login_url(request.env['HTTP_REFERER']).to_s
+        response
+      end
     else
       response
     end
